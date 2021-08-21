@@ -1,0 +1,15 @@
+#!/bin/bash
+input=wally.ppm
+output=wally_cinza.ppm
+exe1=gray
+exe2=gray_acc
+results=results.tsv
+echo -n -e "Run N\tSeq\tAcc\n" > $results
+for i in {1..100} ; do 
+	echo -n $i >> $results
+	echo -n -e "\t" >> $results
+	./$exe1 $input $output | head --bytes=-11 >> $results
+	echo -n -e "\t" >> $results
+	./$exe2 $input $output | head --bytes=-11 >> $results
+	echo -n -e "\n" >> $results
+done 
