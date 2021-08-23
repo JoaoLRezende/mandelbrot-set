@@ -24,7 +24,7 @@ static const double delta_y = max_y - min_y;
 static const int iterations = 100;
 static const int iteration_factor = 255 / iterations;
 
-static int num_interactions(float nx, float ny) {
+static int num_iterations(float nx, float ny) {
 	const double px = nx * delta_x + min_x;
 	const double py = ny * delta_y + min_y;
 	
@@ -43,7 +43,7 @@ static int num_interactions(float nx, float ny) {
 }
 
 static struct pixel getPixel(double nx, double ny) {
-	int n = num_interactions(nx, ny);
+	int n = num_iterations(nx, ny);
 	if (n == -1) {
 		return (struct pixel){0,0,0};
 	} else {
