@@ -1,4 +1,4 @@
-args = -O2 -Wall -Wextra -lm
+args = -g -Wall -Wextra -lm		# in production, we might want to use -O3 instead of -g
 
 
 .PHONY : compile clean
