@@ -7,6 +7,8 @@
 
 #include "img.h"
 
+#define DEFAULT_OUTPUT_FILENAME "mandel.ppm"
+
 static long wtime() { /* funcao reaproveitada do nbodies_serial */
   struct timeval t;
   gettimeofday(&t, NULL);
@@ -28,7 +30,7 @@ static int num_iterations(float nx, float ny) {
   const double py = ny * delta_y + min_y;
 
   const double complex pz = px + py * I;
-  
+
   double complex z = 0;
 
   for (int i = 0; i < iterations; i++) {
@@ -67,10 +69,15 @@ static void process_image(struct image *restrict output_img) {
 
 int main(int argc, char **argv) {
   if (argc != 2 && argc != 1) {
-    fprintf(stderr, "Args: <output_file = \"mandel.ppm\">\n");
+    fprintf(stderr,
+            "usage:\n\t%s <output_file = \"" DEFAULT_OUTPUT_FILENAME "\">\n",
+            argv[0]);
     exit(-1);
   }
-  const char *output_filename = "mandel.ppm";
+
+  // MPI_Init(&argc, &argv);
+
+  const char *output_filename = DEFAULT_OUTPUT_FILENAME;
   if (argc > 1) {
     output_filename = argv[1];
   }
