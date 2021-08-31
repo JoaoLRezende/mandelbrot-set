@@ -28,8 +28,7 @@ static int num_iterations(float nx, float ny) {
   const double py = ny * delta_y + min_y;
 
   const double complex pz = px + py * I;
-  // printf("%Zg\n", pz);
-
+  
   double complex z = 0;
 
   for (int i = 0; i < iterations; i++) {
@@ -73,8 +72,7 @@ int main(int argc, char **argv) {
   }
   const char *output_filename = "mandel.ppm";
   if (argc > 1) {
-    output_filename = argv[1]; /*repitam comigo, output_filename eh um ponteiro
-                                  mutavel para uma string constante*/
+    output_filename = argv[1];
   }
   struct image output_img = createImage(600, 600);
   process_image(&output_img);
