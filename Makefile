@@ -9,6 +9,6 @@ clean :
 	rm mandel
 
 mandel : main.c img.c img.h
-	gcc main.c img.c -o $@ $(args)
+	mpicc main.c img.c --output $@ $(args)
 
 
