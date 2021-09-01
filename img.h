@@ -15,3 +15,4 @@ void clonePPM(const struct image *src, struct image *dest);
 void deletePPM(struct image *src);
 void reservesizePPM(struct image *dest, const int x, const int y);
 struct image createImage(const int x, const int y);
+int get_size_of_image_buffer(struct image *image);

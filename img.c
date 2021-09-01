@@ -127,6 +127,10 @@ struct image createImage(const int x, const int y) {
   return im;
 }
 
+int get_size_of_image_buffer(struct image *image) {
+  return image->x * image->y * sizeof(struct pixel);
+}
+
 void reservesizePPM(struct image *dest, const int x, const int y) {
   const int size = x * y;
   if(dest->x * dest->y != size) {
