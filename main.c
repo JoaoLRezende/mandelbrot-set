@@ -113,10 +113,10 @@ static void process_part_of_image(struct image *restrict output_img,
 
   const int height = output_img->number_of_lines;
   const int width = output_img->number_of_columns;
-  for (int j = line_range.first_line; j < line_range.last_line; j++) {
-    for (int i = 0; i < width; i++) {
-      struct pixel *p = &arr_out[j * width + i];
-      *p = getPixel((double)i / (width - 1), (double)j / (height - 1));
+  for (int current_line = line_range.first_line; current_line < line_range.last_line; current_line++) {
+    for (int current_column = 0; current_column < width; current_column++) {
+      struct pixel *p = &arr_out[current_line * width + current_column];
+      *p = getPixel((double)current_column / (width - 1), (double)current_line / (height - 1));
     }
   }
 }
