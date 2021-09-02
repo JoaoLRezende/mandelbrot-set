@@ -46,7 +46,7 @@ static int parse_header(FILE *f, int *x, int *y, int *v) {
 void readPPM(const char *filename, struct image *pimage) {
   FILE *f = check_magic_num_file(filename);
   if (f == NULL) {
-    pimage->x = pimage->y = -1;
+    pimage->number_of_columns = pimage->number_of_lines = -1;
     pimage->arr = NULL;
     return;
   }
@@ -59,9 +59,9 @@ void readPPM(const char *filename, struct image *pimage) {
 			exit(-1);
 	  }
 	}
-  pimage->x = x;
-  pimage->y = y;
-  struct pixel *arr = malloc(sizeof(struct pixel) * pimage->x * pimage->y);
+  pimage->number_of_columns = x;
+  pimage->number_of_lines = y;
+  struct pixel *arr = malloc(sizeof(struct pixel) * pimage->number_of_columns * pimage->number_of_lines);
   for(int i = 0; i < y; i++) {
     const int i_offset = i * x;
     for(int j = 0; j < x; j++) {
@@ -79,8 +79,8 @@ void readPPM(const char *filename, struct image *pimage) {
 }
 void writePPM(const char *filename, const struct image *pimage) {
   FILE *f = fopen(filename, "w");
-  const int x = pimage->x;
-  const int y = pimage->y;
+  const int x = pimage->number_of_columns;
+  const int y = pimage->number_of_lines;
   fprintf(f, "P3\n%d %d\n255\n", x, y);
   for(int i = 0; i < y; i++) {
     const int i_offset = i * x;
@@ -93,23 +93,23 @@ void writePPM(const char *filename, const struct image *pimage) {
 }
 
 void cloneSizePPM(const struct image *src, struct image *dest) {
-  const int size = src->x * src->y;
-  if(dest->x * dest->y != size) {
+  const int size = src->number_of_columns * src->number_of_lines;
+  if(dest->number_of_columns * dest->number_of_lines != size) {
     dest->arr = realloc(dest->arr, sizeof(struct pixel) * size);
     if (dest->arr == NULL) {
-      dest->x = -1;
-      dest->y = -1;
+      dest->number_of_columns = -1;
+      dest->number_of_lines = -1;
       return;
     }
   }
-  dest->x = src->x;
-  dest->y = src->y;
+  dest->number_of_columns = src->number_of_columns;
+  dest->number_of_lines = src->number_of_lines;
 }
 
 void clonePPM(const struct image *src, struct image *dest) {
   cloneSizePPM(src, dest);
-  const int x = src->x;
-  const int y = src->y;
+  const int x = src->number_of_columns;
+  const int y = src->number_of_lines;
   for(int i = 0; i < y; i++) {
     const int i_offset = i * x;
     for(int j = 0; j < x; j++) {
@@ -120,23 +120,23 @@ void clonePPM(const struct image *src, struct image *dest) {
 
 void reservesizePPM(struct image *dest, const int x, const int y) {
   const int size = x * y;
-  if(dest->x * dest->y != size) {
+  if(dest->number_of_columns * dest->number_of_lines != size) {
     dest->arr = realloc(dest->arr, sizeof(struct pixel) * size);
     if (dest->arr == NULL) {
-      dest->x = -1;
-      dest->y = -1;
+      dest->number_of_columns = -1;
+      dest->number_of_lines = -1;
       return;
     }
   }
-  dest->x = x;
-  dest->y = y;
+  dest->number_of_columns = x;
+  dest->number_of_lines = y;
 }
 
-struct image createImage(const int x, const int y) {
-  const int size = x * y;
-  struct image im = { .x = x, .y = y, .arr = malloc(sizeof(struct pixel)*size)};
+struct image createImage(const int number_of_lines, const int number_of_columns) {
+  const int size = number_of_lines * number_of_columns;
+  struct image im = { .number_of_columns = number_of_columns, .number_of_lines = number_of_lines, .arr = malloc(sizeof(struct pixel)*size)};
   if (im.arr == NULL) {
-    im.x = im.y = -1;
+    im.number_of_columns = im.number_of_lines = -1;
   }
   return im;
 }

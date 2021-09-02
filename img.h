@@ -4,7 +4,7 @@ struct pixel {
 };
 
 struct image {
- int x, y;
+ int number_of_lines, number_of_columns;
  struct pixel *arr;
 };
 
@@ -14,4 +14,4 @@ void cloneSizePPM(const struct image *src, struct image *dest);
 void clonePPM(const struct image *src, struct image *dest);
 void deletePPM(struct image *src);
 void reservesizePPM(struct image *dest, const int x, const int y);
-struct image createImage(const int x, const int y);
+struct image createImage(const int number_of_lines, const int number_of_columns);

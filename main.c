@@ -93,10 +93,10 @@ static void do_master_stuff(int total_number_of_processes,
        worker_rank++) {
     struct line_range line_range_processed_by_this_process =
         get_line_range_processed_by_process(
-            worker_rank, total_number_of_processes, output_img.y);
+            worker_rank, total_number_of_processes, output_img.number_of_lines);
     MPI_Recv(output_img.arr +
-                 line_range_processed_by_this_process.first_line * output_img.x,
-             sizeof(output_img.arr[0]) * output_img.x *
+                 line_range_processed_by_this_process.first_line * output_img.number_of_columns,
+             sizeof(output_img.arr[0]) * output_img.number_of_columns *
                  (line_range_processed_by_this_process.last_line -
                   line_range_processed_by_this_process.first_line),
              MPI_CHAR, worker_rank, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
@@ -111,8 +111,8 @@ static void process_part_of_image(struct image *restrict output_img,
                                   struct line_range line_range) {
   struct pixel *restrict arr_out = output_img->arr;
 
-  const int height = output_img->y;
-  const int width = output_img->x;
+  const int height = output_img->number_of_lines;
+  const int width = output_img->number_of_columns;
   for (int j = line_range.first_line; j < line_range.last_line; j++) {
     for (int i = 0; i < width; i++) {
       struct pixel *p = &arr_out[j * width + i];
@@ -127,12 +127,12 @@ static void do_worker_stuff(int this_process_rank,
 
   struct image output_img = createImage(600, 600);
   struct line_range line_range_to_process = get_line_range_processed_by_process(
-      this_process_rank, total_number_of_processes, output_img.y);
+      this_process_rank, total_number_of_processes, output_img.number_of_lines);
 
   process_part_of_image(&output_img, line_range_to_process);
   MPI_Send(
-      output_img.arr + line_range_to_process.first_line * output_img.x,
-      sizeof(output_img.arr[0]) * output_img.x *
+      output_img.arr + line_range_to_process.first_line * output_img.number_of_columns,
+      sizeof(output_img.arr[0]) * output_img.number_of_columns *
           (line_range_to_process.last_line - line_range_to_process.first_line),
       MPI_CHAR, 0, 0, MPI_COMM_WORLD);
 
