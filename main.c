@@ -76,7 +76,7 @@ get_line_range_processed_by_process(int process_rank,
   // how to deal with leftover lines yet.
   if (total_number_of_lines % worker_count != 0) {
     fputs("Can't divide the image's lines among workers cleanly. Please try a "
-          "different number of proceses.\n",
+          "different number of processes.\n",
           stderr);
     abort();
   }
