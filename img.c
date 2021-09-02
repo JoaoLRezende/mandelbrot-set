@@ -118,19 +118,6 @@ void clonePPM(const struct image *src, struct image *dest) {
   }
 }
 
-struct image createImage(const int x, const int y) {
-  const int size = x * y;
-  struct image im = { .x = x, .y = y, .arr = malloc(sizeof(struct pixel)*size)};
-  if (im.arr == NULL) {
-    im.x = im.y = -1;
-  }
-  return im;
-}
-
-int get_size_of_image_buffer(struct image *image) {
-  return image->x * image->y * sizeof(struct pixel);
-}
-
 void reservesizePPM(struct image *dest, const int x, const int y) {
   const int size = x * y;
   if(dest->x * dest->y != size) {
@@ -145,3 +132,11 @@ void reservesizePPM(struct image *dest, const int x, const int y) {
   dest->y = y;
 }
 
+struct image createImage(const int x, const int y) {
+  const int size = x * y;
+  struct image im = { .x = x, .y = y, .arr = malloc(sizeof(struct pixel)*size)};
+  if (im.arr == NULL) {
+    im.x = im.y = -1;
+  }
+  return im;
+}
