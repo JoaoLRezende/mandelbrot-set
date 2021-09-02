@@ -89,17 +89,20 @@ get_line_range_processed_by_process(int process_rank,
 static void do_master_stuff(int total_number_of_processes,
                             const char *output_filename) {
   struct image output_img = createImage(600, 600);
+  
   for (int worker_rank = 1; worker_rank < total_number_of_processes;
        worker_rank++) {
     struct line_range line_range_processed_by_this_process =
         get_line_range_processed_by_process(
             worker_rank, total_number_of_processes, output_img.number_of_lines);
-    MPI_Recv(output_img.arr +
-                 line_range_processed_by_this_process.first_line * output_img.number_of_columns,
+
+    MPI_Recv(output_img.arr + line_range_processed_by_this_process.first_line *
+                                  output_img.number_of_columns,
              sizeof(output_img.arr[0]) * output_img.number_of_columns *
                  (line_range_processed_by_this_process.last_line -
                   line_range_processed_by_this_process.first_line),
              MPI_CHAR, worker_rank, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
     fprintf(stderr, "Master has received the work done by process %d.\n",
             worker_rank);
   }
@@ -107,34 +110,44 @@ static void do_master_stuff(int total_number_of_processes,
   writePPM(output_filename, &output_img);
 }
 
-static void process_part_of_image(struct image *restrict output_img,
+static void process_part_of_image(struct pixel *restrict arr_out,
+                                  const int total_image_height,
+                                  const int total_image_width,
                                   struct line_range line_range) {
-  struct pixel *restrict arr_out = output_img->arr;
-
-  const int height = output_img->number_of_lines;
-  const int width = output_img->number_of_columns;
-  for (int current_line = line_range.first_line; current_line < line_range.last_line; current_line++) {
-    for (int current_column = 0; current_column < width; current_column++) {
-      struct pixel *p = &arr_out[current_line * width + current_column];
-      *p = getPixel((double)current_column / (width - 1), (double)current_line / (height - 1));
+  for (int current_line = line_range.first_line;
+       current_line < line_range.last_line; current_line++) {
+    for (int current_column = 0; current_column < total_image_width;
+         current_column++) {
+      struct pixel *p =
+          &arr_out[(current_line - line_range.first_line) * total_image_width +
+                   current_column];
+      *p = getPixel((double)current_column / (total_image_width - 1),
+                    (double)current_line / (total_image_height - 1));
     }
   }
 }
 
 static void do_worker_stuff(int this_process_rank,
-                            int total_number_of_processes) {
+                            int total_number_of_processes,
+                            int total_image_height, int total_image_width) {
   long start = wtime();
 
-  struct image output_img = createImage(600, 600);
   struct line_range line_range_to_process = get_line_range_processed_by_process(
-      this_process_rank, total_number_of_processes, output_img.number_of_lines);
+      this_process_rank, total_number_of_processes, total_image_height);
 
-  process_part_of_image(&output_img, line_range_to_process);
-  MPI_Send(
-      output_img.arr + line_range_to_process.first_line * output_img.number_of_columns,
-      sizeof(output_img.arr[0]) * output_img.number_of_columns *
-          (line_range_to_process.last_line - line_range_to_process.first_line),
-      MPI_CHAR, 0, 0, MPI_COMM_WORLD);
+  int number_of_lines_to_process =
+      line_range_to_process.last_line - line_range_to_process.first_line;
+  size_t output_buffer_size_in_bytes =
+      sizeof(struct pixel) * number_of_lines_to_process * total_image_width;
+  struct pixel *output_buffer = malloc(output_buffer_size_in_bytes);
+
+  process_part_of_image(output_buffer, total_image_height, total_image_width,
+                        line_range_to_process);
+
+  MPI_Send(output_buffer, output_buffer_size_in_bytes, MPI_CHAR, 0, 0,
+           MPI_COMM_WORLD);
+
+  free(output_buffer);
 
   long end = wtime();
   fprintf(stderr, "Process %d processed lines %d to %d in %.6f seconds.\n",
@@ -160,7 +173,7 @@ int main(int argc, char **argv) {
   if (this_process_rank == 0) {
     do_master_stuff(total_number_of_processes, output_filename);
   } else if (this_process_rank != 0) {
-    do_worker_stuff(this_process_rank, total_number_of_processes);
+    do_worker_stuff(this_process_rank, total_number_of_processes, 600, 600);
   }
 
   MPI_Finalize();
