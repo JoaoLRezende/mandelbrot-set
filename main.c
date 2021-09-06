@@ -8,6 +8,8 @@
 #include "img.h"
 
 #define DEFAULT_OUTPUT_FILENAME "mandel.ppm"
+#define IMAGE_HEIGHT            600   // in pixels
+#define IMAGE_WIDTH             600   // in pixels
 
 static long wtime() { /* funcao reaproveitada do nbodies_serial */
   struct timeval t;
@@ -88,7 +90,7 @@ get_line_range_processed_by_process(int process_rank,
 
 static void do_master_stuff(int total_number_of_processes,
                             const char *output_filename) {
-  struct image output_img = createImage(600, 600);
+  struct image output_img = createImage(IMAGE_HEIGHT, IMAGE_WIDTH);
   
   for (int worker_rank = 1; worker_rank < total_number_of_processes;
        worker_rank++) {
@@ -173,7 +175,7 @@ int main(int argc, char **argv) {
   if (this_process_rank == 0) {
     do_master_stuff(total_number_of_processes, output_filename);
   } else if (this_process_rank != 0) {
-    do_worker_stuff(this_process_rank, total_number_of_processes, 600, 600);
+    do_worker_stuff(this_process_rank, total_number_of_processes, IMAGE_HEIGHT, IMAGE_WIDTH);
   }
 
   MPI_Finalize();
