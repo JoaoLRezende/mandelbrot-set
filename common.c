@@ -1,7 +1,7 @@
+#include "common.h"
+
 #include <stdio.h>
 #include <stdlib.h>
-
-#include "common.h"
 
 struct line_range
 get_line_range_processed_by_process(int process_rank,

@@ -1,7 +1,8 @@
+#include "img.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "img.h"
 
 static FILE *check_magic_num_file(const char *filename) {
   FILE *f = fopen(filename, "r");
