@@ -1,160 +1,18 @@
-#include <assert.h>
-#include <complex.h>
 #include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/time.h>
 
-#include "img.h"
-
-#define DEFAULT_OUTPUT_FILENAME "mandel.ppm"
-#define IMAGE_HEIGHT            600   // in pixels
-#define IMAGE_WIDTH             600   // in pixels
-
-static long wtime() { /* funcao reaproveitada do nbodies_serial */
-  struct timeval t;
-  gettimeofday(&t, NULL);
-  return t.tv_sec * 1000000 + t.tv_usec;
-}
-
-static const double min_x = -2.5;
-static const double max_x = 1;
-static const double min_y = -1;
-static const double max_y = 1;
-static const double delta_x = max_x - min_x;
-static const double delta_y = max_y - min_y;
-
-static const int iterations = 100;
-static const int iteration_factor = 255 / iterations;
-
-static int num_iterations(float nx, float ny) {
-  const double px = nx * delta_x + min_x;
-  const double py = ny * delta_y + min_y;
-
-  const double complex pz = px + py * I;
-
-  double complex z = 0;
-
-  for (int i = 0; i < iterations; i++) {
-    z = z * z + pz;
-    if (cabs(z) > 2) {
-      return i;
-    }
-  }
-  return -1;
-}
-
-static struct pixel getPixel(double nx, double ny) {
-  int n = num_iterations(nx, ny);
-  if (n == -1) {
-    return (struct pixel){0, 0, 0};
-  } else {
-    unsigned char c = 255 - n * iteration_factor;
-    return (struct pixel){c, c, c};
-  }
-}
+#include "constants.h"
+#include "master.h"
+#include "worker.h"
 
 static void check_arguments(int argc, char **argv) {
   if (argc != 2 && argc != 1) {
     fprintf(stderr,
             "usage:\n\t%s <output_file = \"" DEFAULT_OUTPUT_FILENAME "\">\n",
             argv[0]);
-    exit(-1);
+    exit(EXIT_FAILURE);
   }
-}
-
-struct line_range {
-  int first_line, last_line;
-};
-
-static struct line_range
-get_line_range_processed_by_process(int process_rank,
-                                    int total_number_of_processes,
-                                    int total_number_of_lines) {
-  int worker_count = total_number_of_processes - 1;
-  int worker_num = process_rank - 1;
-
-  // Make sure that we can divide the lines among workers cleanly. We don't know
-  // how to deal with leftover lines yet.
-  if (total_number_of_lines % worker_count != 0) {
-    fputs("Can't divide the image's lines among workers cleanly. Please try a "
-          "different number of processes.\n",
-          stderr);
-    abort();
-  }
-
-  int lines_per_worker = total_number_of_lines / worker_count;
-  return (struct line_range){.first_line = worker_num * lines_per_worker,
-                             .last_line = (worker_num + 1) * lines_per_worker};
-}
-
-static void do_master_stuff(int total_number_of_processes,
-                            const char *output_filename) {
-  struct image output_img = createImage(IMAGE_HEIGHT, IMAGE_WIDTH);
-  
-  for (int worker_rank = 1; worker_rank < total_number_of_processes;
-       worker_rank++) {
-    struct line_range line_range_processed_by_this_process =
-        get_line_range_processed_by_process(
-            worker_rank, total_number_of_processes, output_img.number_of_lines);
-
-    MPI_Recv(output_img.arr + line_range_processed_by_this_process.first_line *
-                                  output_img.number_of_columns,
-             sizeof(output_img.arr[0]) * output_img.number_of_columns *
-                 (line_range_processed_by_this_process.last_line -
-                  line_range_processed_by_this_process.first_line),
-             MPI_CHAR, worker_rank, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-    fprintf(stderr, "Master has received the work done by process %d.\n",
-            worker_rank);
-  }
-
-  writePPM(output_filename, &output_img);
-}
-
-static void process_part_of_image(struct pixel *restrict arr_out,
-                                  const int total_image_height,
-                                  const int total_image_width,
-                                  struct line_range line_range) {
-  for (int current_line = line_range.first_line;
-       current_line < line_range.last_line; current_line++) {
-    for (int current_column = 0; current_column < total_image_width;
-         current_column++) {
-      struct pixel *p =
-          &arr_out[(current_line - line_range.first_line) * total_image_width +
-                   current_column];
-      *p = getPixel((double)current_column / (total_image_width - 1),
-                    (double)current_line / (total_image_height - 1));
-    }
-  }
-}
-
-static void do_worker_stuff(int this_process_rank,
-                            int total_number_of_processes,
-                            int total_image_height, int total_image_width) {
-  long start = wtime();
-
-  struct line_range line_range_to_process = get_line_range_processed_by_process(
-      this_process_rank, total_number_of_processes, total_image_height);
-
-  int number_of_lines_to_process =
-      line_range_to_process.last_line - line_range_to_process.first_line;
-  size_t output_buffer_size_in_bytes =
-      sizeof(struct pixel) * number_of_lines_to_process * total_image_width;
-  struct pixel *output_buffer = malloc(output_buffer_size_in_bytes);
-
-  process_part_of_image(output_buffer, total_image_height, total_image_width,
-                        line_range_to_process);
-
-  MPI_Send(output_buffer, output_buffer_size_in_bytes, MPI_CHAR, 0, 0,
-           MPI_COMM_WORLD);
-
-  free(output_buffer);
-
-  long end = wtime();
-  fprintf(stderr, "Process %d processed lines %d to %d in %.6f seconds.\n",
-          this_process_rank, line_range_to_process.first_line,
-          line_range_to_process.last_line, (end - start) / 1000000.0);
 }
 
 int main(int argc, char **argv) {
