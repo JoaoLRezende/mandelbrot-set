@@ -18,10 +18,7 @@ static void check_arguments(int argc, char **argv) {
 int main(int argc, char **argv) {
   check_arguments(argc, argv);
 
-  const char *output_filename = DEFAULT_OUTPUT_FILENAME;
-  if (argc > 1) {
-    output_filename = argv[1];
-  }
+  const char *output_filename = argc > 1 ? argv[1] : DEFAULT_OUTPUT_FILENAME;
 
   MPI_Init(&argc, &argv);
 
@@ -33,7 +30,8 @@ int main(int argc, char **argv) {
   if (this_process_rank == 0) {
     do_master_stuff(total_number_of_processes, output_filename);
   } else if (this_process_rank != 0) {
-    do_worker_stuff(this_process_rank, total_number_of_processes, IMAGE_HEIGHT, IMAGE_WIDTH);
+    do_worker_stuff(this_process_rank, total_number_of_processes, IMAGE_HEIGHT,
+                    IMAGE_WIDTH);
   }
 
   MPI_Finalize();
