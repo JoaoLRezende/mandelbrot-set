@@ -17,8 +17,8 @@ struct worker_status {
 
 static int get_idle_worker(struct worker_status *worker_status_array,
                            int number_of_workers) {
-  // In each execution, we start searching in the position immediately after the
-  // last worker that we returned.
+  // In each execution, we start searching in the position that immediately
+  // follows the last worker that we returned.
   static int worker_index = 0;
   while (worker_status_array[worker_index].is_busy) {
     worker_index = (worker_index + 1) % number_of_workers;
@@ -34,8 +34,7 @@ static struct job get_next_job(int number_of_lines_already_commissioned) {
                           number_of_lines_already_commissioned + LINES_PER_JOB};
 }
 
-/* Send a job to a worker.
- */
+// Send a job to a worker.
 static void request_line_batch(struct job job, int worker) {
   const int target_worker_process_rank = worker + 1;
   MPI_Send(&job, sizeof(job), MPI_CHAR, target_worker_process_rank, 0,
@@ -47,12 +46,12 @@ static void request_line_batch(struct job job, int worker) {
  * Returns the index of the worker that sent the received line batch.
  */
 static int receive_job_result(struct image *output_img,
-                              struct worker_status *worker_status_array) {
+                              const struct worker_status *worker_status_array) {
   MPI_Status mpi_status;
   MPI_Probe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &mpi_status);
 
   int sending_worker_process_rank = mpi_status.MPI_SOURCE;
-  struct worker_status *sending_worker_status =
+  const struct worker_status *sending_worker_status =
       &worker_status_array[sending_worker_process_rank - 1];
   assert(sending_worker_status->is_busy);
 
@@ -83,11 +82,12 @@ static int receive_job_result(struct image *output_img,
   // argument passed to MPI_Get_count. We probably should call the
   // data-type-defining functions before branching into master- or
   // worker-specific code. The MPI_Datatype object that represents those objects
-  // probably should be extern-declared in common.h, and defined in main.c. Then
-  // be sure to change the other arguments that are passed to MPI_Recv
-  // accordingly. Then change the workers' send code accordingly. Also do the
-  // same in the function request_line_batch above, in the worker's function
-  // receive_job_request, and in other functions that exchange messages.
+  // probably should be extern-declared in common.h, and defined in main.c
+  // (edit: why not common.c?). Then be sure to change the other arguments that
+  // are passed to MPI_Recv accordingly. Then change the workers' send code
+  // accordingly. Also do the same in the function request_line_batch above, in
+  // the worker's function receive_job_request, and in other functions that
+  // exchange messages.
 
   // Check the MPI status object apropriately. Make sure no errors happened.
 
@@ -101,10 +101,9 @@ static int receive_job_result(struct image *output_img,
 static void send_termination_message(int number_of_workers) {
   struct job termination_signal = {.first_line = -1, .last_line = -1};
 
-  for (int worker_index = 1; worker_index <= number_of_workers;
-       ++worker_index) {
-    MPI_Send(&termination_signal, sizeof(termination_signal), MPI_CHAR,
-             worker_index, 0, MPI_COMM_WORLD);
+  for (int worker = 1; worker <= number_of_workers; ++worker) {
+    MPI_Send(&termination_signal, sizeof(termination_signal), MPI_CHAR, worker,
+             0, MPI_COMM_WORLD);
   }
 }
 
@@ -112,13 +111,13 @@ void do_master_stuff(int total_number_of_processes,
                      const char *output_filename) {
   struct image output_img = createImage(IMAGE_HEIGHT, IMAGE_WIDTH);
   // number_of_requested_lines holds the number of lines that we have already
-  // asked a worker to process. Since we commission lines sequentially, it also
+  // asked a worker to compute. Since we commission lines sequentially, it also
   // is the offset of the first line that we still haven't asked a worker to
-  // process.
+  // compute.
   int number_of_requested_lines = 0;
   int number_of_received_lines = 0;
 
-  int number_of_workers = total_number_of_processes - 1;
+  const int number_of_workers = total_number_of_processes - 1;
   struct worker_status *worker_statuses =
       calloc(number_of_workers, sizeof(*worker_statuses));
   int number_of_busy_workers = 0;
@@ -134,8 +133,7 @@ void do_master_stuff(int total_number_of_processes,
       request_line_batch(job, worker);
       { // temp, for debugging
         fprintf(stderr,
-                "Master has requested that process rank %d process lines %d to "
-                "%d.\n",
+                "Master has asked process %d to compute lines %d to %d.\n",
                 worker + 1, job.first_line, job.last_line);
       }
       worker_statuses[worker].is_busy = true;
