@@ -91,9 +91,6 @@ static int receive_job_result(struct image *output_img,
 
   // Check the MPI status object apropriately. Make sure no errors happened.
 
-  fprintf(stderr, "Master has received the work done by process %d.\n",
-          sending_worker_process_rank);
-
   return sending_worker_process_rank - 1;
 }
 
@@ -122,7 +119,7 @@ void do_master_stuff(int total_number_of_processes,
       calloc(number_of_workers, sizeof(*worker_statuses));
   int number_of_busy_workers = 0;
 
-  fprintf(stderr, "Master is starting.\n");
+  const long int start_time = wtime();
   while (number_of_received_lines < output_img.number_of_lines) {
     // Commission as many lines as we can, until all workers are busy or there
     // are no more lines to commission.
@@ -131,11 +128,6 @@ void do_master_stuff(int total_number_of_processes,
       struct job job = get_next_job(number_of_requested_lines);
       int worker = get_idle_worker(worker_statuses, number_of_workers);
       request_line_batch(job, worker);
-      { // temp, for debugging
-        fprintf(stderr,
-                "Master has asked process %d to compute lines %d to %d.\n",
-                worker + 1, job.first_line, job.last_line);
-      }
       worker_statuses[worker].is_busy = true;
       worker_statuses[worker].current_job = job;
       number_of_requested_lines += job.last_line - job.first_line;
@@ -149,6 +141,9 @@ void do_master_stuff(int total_number_of_processes,
     worker_statuses[worker].is_busy = false;
     number_of_busy_workers -= 1;
   }
+
+  fprintf(stderr, "We're done! Time taken: %.5f seconds.\n",
+          (wtime() - start_time) / 1000000.0);
 
   free(worker_statuses);
   send_termination_message(number_of_workers);

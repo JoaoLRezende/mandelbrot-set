@@ -82,9 +82,6 @@ void do_worker_stuff(int this_process_rank, int total_image_height,
     struct job job = receive_job_request();
 
     if (job.first_line == -1) {
-      fprintf(
-          stderr,
-          "A worker: I received a termination signal! Killing myself now.\n");
       return;
     }
 
@@ -103,11 +100,10 @@ void do_worker_stuff(int this_process_rank, int total_image_height,
 
     free(output_buffer);
 
-    long end = wtime();
     fprintf(stderr,
-            "Process %d processed lines %d to %d in %.6f seconds with %d "
+            "Process %d processed lines %4d to %4d in %.4f seconds with %d "
             "threads.\n",
             this_process_rank, job.first_line, job.last_line,
-            (end - start) / 1000000.0, number_of_threads_used);
+            (wtime() - start) / 1000000.0, number_of_threads_used);
   }
 }
