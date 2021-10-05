@@ -10,4 +10,6 @@ struct job {
   int32_t last_line;
 };
 
+long wtime();
+
 #endif

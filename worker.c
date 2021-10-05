@@ -7,17 +7,10 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/time.h>
 
 #include "common.h"
 #include "constants.h"
 #include "img.h"
-
-static long wtime() { /* funcao reaproveitada do nbodies_serial */
-  struct timeval t;
-  gettimeofday(&t, NULL);
-  return t.tv_sec * 1000000 + t.tv_usec;
-}
 
 static int num_iterations(float nx, float ny) {
   const double px = nx * delta_x + min_x;
