@@ -27,15 +27,6 @@ int main(int argc, char **argv) {
   int total_number_of_processes;
   MPI_Comm_size(MPI_COMM_WORLD, &total_number_of_processes);
 
-  // Make sure that we can divide the lines among workers cleanly. We don't
-  // know how to deal with leftover lines yet (TODO).
-  if (IMAGE_HEIGHT % (total_number_of_processes - 1) != 0) {
-    fputs("Can't divide the image's lines among workers cleanly. Please try a "
-          "different number of processes.\n",
-          stderr);
-    abort();
-  }
-
   if (this_process_rank == 0) {
     // TODO: why isn't do_master_stuff receiving the image's dimensions?
     do_master_stuff(total_number_of_processes, output_filename);

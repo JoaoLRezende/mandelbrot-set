@@ -6,3 +6,11 @@ long wtime() { /* funcao reaproveitada do nbodies_serial */
   gettimeofday(&t, NULL);
   return t.tv_sec * 1000000 + t.tv_usec;
 }
+
+int min(int x, int y) {
+  if (x < y) {
+    return x;
+  } else {
+    return y;
+  }
+}

@@ -28,10 +28,17 @@ static int get_idle_worker(struct worker_status *worker_status_array,
 }
 
 // Find something for a worker to do.
-static struct job get_next_job(int number_of_lines_already_commissioned) {
+static struct job get_next_job(int number_of_lines_already_commissioned,
+                               int total_number_of_lines) {
+  const int number_of_lines_not_yet_commissioned =
+      total_number_of_lines - number_of_lines_already_commissioned;
+
+  const int number_of_lines_to_request =
+      min(LINES_PER_JOB, number_of_lines_not_yet_commissioned);
+
   return (struct job){.first_line = number_of_lines_already_commissioned,
-                      .last_line =
-                          number_of_lines_already_commissioned + LINES_PER_JOB};
+                      .last_line = number_of_lines_already_commissioned +
+                                   number_of_lines_to_request};
 }
 
 // Send a job to a worker.
@@ -125,7 +132,8 @@ void do_master_stuff(int total_number_of_processes,
     // are no more lines to commission.
     while (number_of_requested_lines < output_img.number_of_lines &&
            number_of_busy_workers < number_of_workers) {
-      struct job job = get_next_job(number_of_requested_lines);
+      struct job job =
+          get_next_job(number_of_requested_lines, output_img.number_of_lines);
       int worker = get_idle_worker(worker_statuses, number_of_workers);
       request_line_batch(job, worker);
       worker_statuses[worker].is_busy = true;

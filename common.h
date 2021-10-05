@@ -10,6 +10,8 @@ struct job {
   int32_t last_line;
 };
 
+int min(int x, int y);
+
 long wtime();
 
 #endif
