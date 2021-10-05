@@ -1,10 +1,12 @@
 #include "worker.h"
 
+#include <assert.h>
 #include <complex.h>
+#include <mpi.h>
+#include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
-#include <stdio.h>
-#include <mpi.h>
 
 #include "common.h"
 #include "constants.h"
@@ -45,14 +47,13 @@ static struct pixel getPixel(double nx, double ny) {
 
 static void process_part_of_image(struct pixel *restrict arr_out,
                                   const int total_image_height,
-                                  const int total_image_width,
-                                  struct line_range line_range) {
-  for (int current_line = line_range.first_line;
-       current_line < line_range.last_line; current_line++) {
+                                  const int total_image_width, struct job job) {
+  for (int current_line = job.first_line; current_line < job.last_line;
+       current_line++) {
     for (int current_column = 0; current_column < total_image_width;
          current_column++) {
       struct pixel *p =
-          &arr_out[(current_line - line_range.first_line) * total_image_width +
+          &arr_out[(current_line - job.first_line) * total_image_width +
                    current_column];
       *p = getPixel((double)current_column / (total_image_width - 1),
                     (double)current_line / (total_image_height - 1));
@@ -60,29 +61,43 @@ static void process_part_of_image(struct pixel *restrict arr_out,
   }
 }
 
-void do_worker_stuff(int this_process_rank, int total_number_of_processes,
-                     int total_image_height, int total_image_width) {
-  long start = wtime();
+static struct job receive_job_request() {
+  struct job job;
+  MPI_Status mpi_status;
+  MPI_Recv(&job, sizeof(job), MPI_CHAR, 0, MPI_ANY_TAG, MPI_COMM_WORLD,
+           &mpi_status);
 
-  struct line_range line_range_to_process = get_line_range_processed_by_process(
-      this_process_rank, total_number_of_processes, total_image_height);
+  // Assert that we received as many bytes as we expected.
+  int number_of_received_bytes;
+  MPI_Get_count(&mpi_status, MPI_CHAR, &number_of_received_bytes);
+  assert(number_of_received_bytes == sizeof(job));
 
-  int number_of_lines_to_process =
-      line_range_to_process.last_line - line_range_to_process.first_line;
-  size_t output_buffer_size_in_bytes =
-      sizeof(struct pixel) * number_of_lines_to_process * total_image_width;
-  struct pixel *output_buffer = malloc(output_buffer_size_in_bytes);
+  return job;
+}
 
-  process_part_of_image(output_buffer, total_image_height, total_image_width,
-                        line_range_to_process);
+void do_worker_stuff(int this_process_rank, int total_image_height,
+                     int total_image_width) {
+  while (true) { // TODO: implement end condition
+    struct job job = receive_job_request();
 
-  MPI_Send(output_buffer, output_buffer_size_in_bytes, MPI_CHAR, 0, 0,
-           MPI_COMM_WORLD);
+    long start = wtime();
 
-  free(output_buffer);
+    int number_of_lines_to_process = job.last_line - job.first_line;
+    size_t output_buffer_size_in_bytes =
+        sizeof(struct pixel) * number_of_lines_to_process * total_image_width;
+    struct pixel *output_buffer = malloc(output_buffer_size_in_bytes);
 
-  long end = wtime();
-  fprintf(stderr, "Process %d processed lines %d to %d in %.6f seconds.\n",
-          this_process_rank, line_range_to_process.first_line,
-          line_range_to_process.last_line, (end - start) / 1000000.0);
+    process_part_of_image(output_buffer, total_image_height, total_image_width,
+                          job);
+
+    MPI_Send(output_buffer, output_buffer_size_in_bytes, MPI_CHAR, 0, 0,
+             MPI_COMM_WORLD);
+
+    free(output_buffer);
+
+    long end = wtime();
+    fprintf(stderr, "Process %d processed lines %d to %d in %.6f seconds.\n",
+            this_process_rank, job.first_line, job.last_line,
+            (end - start) / 1000000.0);
+  }
 }
