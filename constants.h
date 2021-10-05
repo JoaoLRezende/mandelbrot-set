@@ -2,8 +2,8 @@
 #define CONSTANTS_H
 
 #define DEFAULT_OUTPUT_FILENAME "mandel.ppm"
-#define IMAGE_HEIGHT 600 // in pixels
-#define IMAGE_WIDTH 600  // in pixels
+#define IMAGE_HEIGHT 3000 // in pixels
+#define IMAGE_WIDTH  3000 // in pixels
 #define LINES_PER_JOB 100 // TODO: this number is arbitrary. Experiment.
 
 #define min_x (-2.5)
