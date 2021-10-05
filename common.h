@@ -6,8 +6,8 @@
  * worker should now terminate.
  */
 struct job {
-  int first_line;
-  int last_line;
+  int32_t first_line;
+  int32_t last_line;
 };
 
 #endif
