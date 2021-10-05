@@ -39,17 +39,6 @@ int main(int argc, char **argv) {
   if (this_process_rank == 0) {
     // TODO: why isn't do_master_stuff receiving the image's dimensions?
     do_master_stuff(total_number_of_processes, output_filename);
-
-    { // temp, for debugging
-      fprintf(stderr, "Master: we're finished! I'm about to call MPI_Abort.\n");
-    }
-
-    MPI_Abort(MPI_COMM_WORLD, EXIT_SUCCESS);
-
-    { // temp, for debugging
-      fprintf(stderr, "Aborted! Do I still exist?\n");
-    }
-
   } else if (this_process_rank != 0) {
     do_worker_stuff(this_process_rank, IMAGE_HEIGHT, IMAGE_WIDTH);
   }

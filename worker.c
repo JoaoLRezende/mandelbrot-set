@@ -80,6 +80,11 @@ void do_worker_stuff(int this_process_rank, int total_image_height,
   while (true) { // TODO: implement end condition
     struct job job = receive_job_request();
 
+    if (job.first_line == -1) {
+      fprintf(stderr, "A worker: I received a termination signal! Killing myself now.\n");
+      return;
+    }
+
     long start = wtime();
 
     int number_of_lines_to_process = job.last_line - job.first_line;

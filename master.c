@@ -97,6 +97,17 @@ static int receive_job_result(struct image *output_img,
   return sending_worker_process_rank - 1;
 }
 
+/* Signal to workers that we're done. */
+static void send_termination_message(int number_of_workers) {
+  struct job termination_signal = {.first_line = -1, .last_line = -1};
+
+  for (int worker_index = 1; worker_index <= number_of_workers;
+       ++worker_index) {
+    MPI_Send(&termination_signal, sizeof(termination_signal), MPI_CHAR,
+             worker_index, 0, MPI_COMM_WORLD);
+  }
+}
+
 void do_master_stuff(int total_number_of_processes,
                      const char *output_filename) {
   struct image output_img = createImage(IMAGE_HEIGHT, IMAGE_WIDTH);
@@ -142,5 +153,6 @@ void do_master_stuff(int total_number_of_processes,
   }
 
   free(worker_statuses);
+  send_termination_message(number_of_workers);
   writePPM(output_filename, &output_img);
 }
