@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <complex.h>
 #include <mpi.h>
+#include <omp.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -45,20 +46,27 @@ static struct pixel getPixel(double nx, double ny) {
   }
 }
 
-static void process_part_of_image(struct pixel *restrict arr_out,
-                                  const int total_image_height,
-                                  const int total_image_width, struct job job) {
-  for (int current_line = job.first_line; current_line < job.last_line;
-       current_line++) {
-    for (int current_column = 0; current_column < total_image_width;
-         current_column++) {
-      struct pixel *p =
-          &arr_out[(current_line - job.first_line) * total_image_width +
-                   current_column];
-      *p = getPixel((double)current_column / (total_image_width - 1),
-                    (double)current_line / (total_image_height - 1));
+static int process_part_of_image(struct pixel *restrict arr_out,
+                                 const int total_image_height,
+                                 const int total_image_width, struct job job) {
+  const int number_of_lines = job.last_line - job.first_line;
+  int number_of_threads_used;
+#pragma omp parallel
+#pragma omp single
+  {
+    number_of_threads_used = omp_get_num_threads();
+  }
+#pragma omp for schedule(static, number_of_lines / omp_get_num_threads())
+  for (int curr_line = job.first_line; curr_line < job.last_line; curr_line++) {
+    struct pixel *first_pixel_of_line =
+        &arr_out[(curr_line - job.first_line) * total_image_width];
+    for (int curr_column = 0; curr_column < total_image_width; curr_column++) {
+      struct pixel *curr_pixel = first_pixel_of_line + curr_column;
+      *curr_pixel = getPixel((double)curr_column / (total_image_width - 1),
+                             (double)curr_line / (total_image_height - 1));
     }
   }
+  return number_of_threads_used;
 }
 
 static struct job receive_job_request() {
@@ -81,7 +89,9 @@ void do_worker_stuff(int this_process_rank, int total_image_height,
     struct job job = receive_job_request();
 
     if (job.first_line == -1) {
-      fprintf(stderr, "A worker: I received a termination signal! Killing myself now.\n");
+      fprintf(
+          stderr,
+          "A worker: I received a termination signal! Killing myself now.\n");
       return;
     }
 
@@ -92,8 +102,8 @@ void do_worker_stuff(int this_process_rank, int total_image_height,
         sizeof(struct pixel) * number_of_lines_to_process * total_image_width;
     struct pixel *output_buffer = malloc(output_buffer_size_in_bytes);
 
-    process_part_of_image(output_buffer, total_image_height, total_image_width,
-                          job);
+    int number_of_threads_used = process_part_of_image(
+        output_buffer, total_image_height, total_image_width, job);
 
     MPI_Send(output_buffer, output_buffer_size_in_bytes, MPI_CHAR, 0, 0,
              MPI_COMM_WORLD);
@@ -101,8 +111,10 @@ void do_worker_stuff(int this_process_rank, int total_image_height,
     free(output_buffer);
 
     long end = wtime();
-    fprintf(stderr, "Process %d processed lines %d to %d in %.6f seconds.\n",
+    fprintf(stderr,
+            "Process %d processed lines %d to %d in %.6f seconds with %d "
+            "threads.\n",
             this_process_rank, job.first_line, job.last_line,
-            (end - start) / 1000000.0);
+            (end - start) / 1000000.0, number_of_threads_used);
   }
 }

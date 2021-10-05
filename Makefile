@@ -1,4 +1,4 @@
-args = -g -Wall -Wextra -lm		# in production, we might want to use -O3 instead of -g
+args = -g -Wall -Wextra -lm	-fopenmp	# in production, we might want to use -O3 instead of -g
 
 
 .PHONY : compile clean
