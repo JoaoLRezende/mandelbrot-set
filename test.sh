@@ -9,4 +9,4 @@ image_width="3000"              # in pixels
 cd "$(dirname "$0")"
 
 mpiexec --use-hwthread-cpus -n $process_count \
-    bin/mandel ${output_image} ${image_height} ${image_width} ${lines_per_job}
+    mandel ${output_image} ${image_height} ${image_width} ${lines_per_job}
