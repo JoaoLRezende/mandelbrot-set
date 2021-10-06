@@ -4,7 +4,7 @@
 #define DEFAULT_OUTPUT_FILENAME "output.ppm"
 #define DEFAULT_IMAGE_HEIGHT 3000 // in pixels
 #define DEFAULT_IMAGE_WIDTH  3000 // in pixels
-#define LINES_PER_JOB 100 // TODO: this number is arbitrary. Experiment.
+#define DEFAULT_LINES_PER_JOB 100
 
 #define min_x (-2.5)
 #define max_x 1.0

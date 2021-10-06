@@ -29,12 +29,12 @@ static int get_idle_worker(struct worker_status *worker_status_array,
 
 // Find something for a worker to do.
 static struct job get_next_job(int number_of_lines_already_commissioned,
-                               int total_number_of_lines) {
+                               int total_number_of_lines, int lines_per_job) {
   const int number_of_lines_not_yet_commissioned =
       total_number_of_lines - number_of_lines_already_commissioned;
 
   const int number_of_lines_to_request =
-      min(LINES_PER_JOB, number_of_lines_not_yet_commissioned);
+      min(lines_per_job, number_of_lines_not_yet_commissioned);
 
   return (struct job){.first_line = number_of_lines_already_commissioned,
                       .last_line = number_of_lines_already_commissioned +
@@ -112,7 +112,7 @@ static void send_termination_message(int number_of_workers) {
 }
 
 void do_master_stuff(const char *output_filename, int image_height,
-                     int image_width) {
+                     int image_width, int lines_per_job) {
   struct image output_img = createImage(image_height, image_width);
   // number_of_requested_lines holds the number of lines that we have already
   // asked a worker to compute. Since we commission lines sequentially, it also
@@ -134,8 +134,8 @@ void do_master_stuff(const char *output_filename, int image_height,
     // are no more lines to commission.
     while (number_of_requested_lines < output_img.number_of_lines &&
            number_of_busy_workers < number_of_workers) {
-      struct job job =
-          get_next_job(number_of_requested_lines, output_img.number_of_lines);
+      struct job job = get_next_job(number_of_requested_lines,
+                                    output_img.number_of_lines, lines_per_job);
       int worker = get_idle_worker(worker_statuses, number_of_workers);
       request_line_batch(job, worker);
       worker_statuses[worker].is_busy = true;
