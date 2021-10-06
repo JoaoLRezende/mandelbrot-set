@@ -95,15 +95,16 @@ void do_worker_stuff(int this_process_rank, int total_image_height,
     int number_of_threads_used = process_part_of_image(
         output_buffer, total_image_height, total_image_width, job);
 
-    MPI_Send(output_buffer, output_buffer_size_in_bytes, MPI_CHAR, 0, 0,
-             MPI_COMM_WORLD);
-
-    free(output_buffer);
-
     fprintf(stderr,
             "Process %d processed lines %4d to %4d in %.4f seconds with %d "
             "threads.\n",
             this_process_rank, job.first_line, job.last_line,
             (wtime() - start) / 1000000.0, number_of_threads_used);
+
+    MPI_Send(output_buffer, output_buffer_size_in_bytes, MPI_CHAR, 0, 0,
+             MPI_COMM_WORLD);
+
+    free(output_buffer);
+
   }
 }

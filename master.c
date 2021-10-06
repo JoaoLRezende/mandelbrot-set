@@ -111,9 +111,9 @@ static void send_termination_message(int number_of_workers) {
   }
 }
 
-void do_master_stuff(int total_number_of_processes,
-                     const char *output_filename) {
-  struct image output_img = createImage(IMAGE_HEIGHT, IMAGE_WIDTH);
+void do_master_stuff(const char *output_filename, int image_height,
+                     int image_width) {
+  struct image output_img = createImage(image_height, image_width);
   // number_of_requested_lines holds the number of lines that we have already
   // asked a worker to compute. Since we commission lines sequentially, it also
   // is the offset of the first line that we still haven't asked a worker to
@@ -121,6 +121,8 @@ void do_master_stuff(int total_number_of_processes,
   int number_of_requested_lines = 0;
   int number_of_received_lines = 0;
 
+  int total_number_of_processes;
+  MPI_Comm_size(MPI_COMM_WORLD, &total_number_of_processes);
   const int number_of_workers = total_number_of_processes - 1;
   struct worker_status *worker_statuses =
       calloc(number_of_workers, sizeof(*worker_statuses));
