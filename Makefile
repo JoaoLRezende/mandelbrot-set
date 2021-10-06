@@ -1,14 +1,14 @@
-args = -g -Wall -Wextra -lm	-fopenmp	# in production, we might want to use -O3 instead of -g
-
+#args = -g  -Wall -Wextra -lm -fopenmp	# for debugging
+args = -O3 -Wall -Wextra -lm -fopenmp	# for production
 
 .PHONY : compile clean
 
-compile : mandel
+compile : bin/mandel
 
 clean :
-	rm mandel
+	rm bin/mandel
 
-mandel : main.c img.c img.h common.c common.h master.c master.h worker.c worker.h constants.h
-	mpicc main.c img.c common.c master.c worker.c --output $@ $(args)
+bin/mandel : src/main.c src/img.c src/img.h src/common.c src/common.h src/master.c src/master.h src/worker.c src/worker.h src/constants.h
+	mpicc src/main.c src/img.c src/common.c src/master.c src/worker.c --output $@ $(args)
 
 

@@ -1,7 +1,7 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
-#define DEFAULT_OUTPUT_FILENAME "output.ppm"
+#define DEFAULT_OUTPUT_FILENAME "output/output.ppm"
 #define DEFAULT_IMAGE_HEIGHT 3000 // in pixels
 #define DEFAULT_IMAGE_WIDTH  3000 // in pixels
 #define DEFAULT_LINES_PER_JOB 100
