@@ -46,9 +46,7 @@ static int process_part_of_image(struct pixel *restrict arr_out,
   int number_of_threads_used;
 #pragma omp parallel
 #pragma omp single
-  {
-    number_of_threads_used = omp_get_num_threads();
-  }
+  { number_of_threads_used = omp_get_num_threads(); }
 #pragma omp for schedule(static, number_of_lines / omp_get_num_threads())
   for (int curr_line = job.first_line; curr_line < job.last_line; curr_line++) {
     struct pixel *first_pixel_of_line =
@@ -65,34 +63,28 @@ static int process_part_of_image(struct pixel *restrict arr_out,
 static struct job receive_job_request() {
   struct job job;
   MPI_Status mpi_status;
-  MPI_Recv(&job, sizeof(job), MPI_CHAR, 0, MPI_ANY_TAG, MPI_COMM_WORLD,
+  MPI_Recv(&job, 1, MPI_datatype_struct_job, 0, MPI_ANY_TAG, MPI_COMM_WORLD,
            &mpi_status);
-
-  // Assert that we received as many bytes as we expected.
-  int number_of_received_bytes;
-  MPI_Get_count(&mpi_status, MPI_CHAR, &number_of_received_bytes);
-  assert(number_of_received_bytes == sizeof(job));
-
   return job;
 }
 
 void do_worker_stuff(int this_process_rank, int total_image_height,
                      int total_image_width) {
-  while (true) { // TODO: implement end condition
+  while (true) {
     struct job job = receive_job_request();
 
     if (job.first_line == -1) {
       return;
     }
 
-    long start = wtime();
+    const long start = wtime();
 
-    int number_of_lines_to_process = job.last_line - job.first_line;
-    size_t output_buffer_size_in_bytes =
-        sizeof(struct pixel) * number_of_lines_to_process * total_image_width;
-    struct pixel *output_buffer = malloc(output_buffer_size_in_bytes);
+    const int number_of_lines_to_process = job.last_line - job.first_line;
+    const int number_of_pixels = number_of_lines_to_process * total_image_width;
+    struct pixel *output_buffer =
+        malloc(sizeof(struct pixel) * number_of_pixels);
 
-    int number_of_threads_used = process_part_of_image(
+    const int number_of_threads_used = process_part_of_image(
         output_buffer, total_image_height, total_image_width, job);
 
     fprintf(stderr,
@@ -101,10 +93,9 @@ void do_worker_stuff(int this_process_rank, int total_image_height,
             this_process_rank, job.first_line, job.last_line,
             (wtime() - start) / 1000000.0, number_of_threads_used);
 
-    MPI_Send(output_buffer, output_buffer_size_in_bytes, MPI_CHAR, 0, 0,
+    MPI_Send(output_buffer, number_of_pixels, MPI_datatype_struct_pixel, 0, 0,
              MPI_COMM_WORLD);
 
     free(output_buffer);
-
   }
 }

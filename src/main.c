@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "common.h"
 #include "constants.h"
 #include "master.h"
 #include "worker.h"
@@ -13,7 +14,8 @@ int main(int argc, char **argv) {
   const int lines_per_job = (argc > 4) ? atoi(argv[4]) : DEFAULT_LINES_PER_JOB;
 
   MPI_Init(&argc, &argv);
-
+  define_MPI_datatypes();
+  
   int this_process_rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &this_process_rank);
 

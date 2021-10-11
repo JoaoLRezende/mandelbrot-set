@@ -44,7 +44,7 @@ static struct job get_next_job(int number_of_lines_already_commissioned,
 // Send a job to a worker.
 static void request_line_batch(struct job job, int worker) {
   const int target_worker_process_rank = worker + 1;
-  MPI_Send(&job, sizeof(job), MPI_CHAR, target_worker_process_rank, 0,
+  MPI_Send(&job, 1, MPI_datatype_struct_job, target_worker_process_rank, 0,
            MPI_COMM_WORLD);
 }
 
@@ -70,31 +70,15 @@ static int receive_job_result(struct image *output_img,
 
   // Make sure that we're receiving as many bytes as we expect.
   int number_of_actually_received_pixels;
-  MPI_Get_count(&mpi_status, MPI_CHAR, &number_of_actually_received_pixels);
-  assert(number_of_actually_received_pixels ==
-         number_of_received_pixels * (int)sizeof(struct pixel));
+  MPI_Get_count(&mpi_status, MPI_datatype_struct_pixel,
+                &number_of_actually_received_pixels);
+  assert(number_of_actually_received_pixels == number_of_received_pixels);
 
   struct pixel *destination_buffer =
       output_img->arr + first_received_line * output_img->number_of_columns;
-  MPI_Recv(destination_buffer,
-           sizeof(output_img->arr[0]) * number_of_received_pixels, MPI_CHAR,
-           MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &mpi_status);
-
-  // TODO: we shouldn't be passing MPI_CHAR to MPI_Recv above, since we
-  // aren't actually receiving chars. Do better. See see MPI functions that have
-  // "type" in their name. Also see https://youtu.be/MNbMl1buV-I?t=985. Don't
-  // forget to call MPI_Type_commit. And note that the number of elements to
-  // receive and the mumber returned by MPI_Get_count will change: they will
-  // become the number of received pixels. Remember to change too the data-type
-  // argument passed to MPI_Get_count. We probably should call the
-  // data-type-defining functions before branching into master- or
-  // worker-specific code. The MPI_Datatype object that represents those objects
-  // probably should be extern-declared in common.h, and defined in main.c
-  // (edit: why not common.c?). Then be sure to change the other arguments that
-  // are passed to MPI_Recv accordingly. Then change the workers' send code
-  // accordingly. Also do the same in the function request_line_batch above, in
-  // the worker's function receive_job_request, and in other functions that
-  // exchange messages.
+  MPI_Recv(destination_buffer, number_of_received_pixels,
+           MPI_datatype_struct_pixel, MPI_ANY_SOURCE, MPI_ANY_TAG,
+           MPI_COMM_WORLD, &mpi_status);
 
   // Check the MPI status object apropriately. Make sure no errors happened.
 
@@ -106,8 +90,8 @@ static void send_termination_message(int number_of_workers) {
   struct job termination_signal = {.first_line = -1, .last_line = -1};
 
   for (int worker = 1; worker <= number_of_workers; ++worker) {
-    MPI_Send(&termination_signal, sizeof(termination_signal), MPI_CHAR, worker,
-             0, MPI_COMM_WORLD);
+    MPI_Send(&termination_signal, 1, MPI_datatype_struct_job, worker, 0,
+             MPI_COMM_WORLD);
   }
 }
 
