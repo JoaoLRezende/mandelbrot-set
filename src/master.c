@@ -17,7 +17,7 @@ struct worker_status {
 
 static int get_idle_worker(struct worker_status *worker_status_array,
                            int number_of_workers) {
-  // In each execution, we start searching in the position that immediately
+  // In each call, we start searching in the position that immediately
   // follows the last worker that we returned.
   static int worker_index = 0;
   while (worker_status_array[worker_index].is_busy) {
@@ -79,8 +79,6 @@ static int receive_job_result(struct image *output_img,
   MPI_Recv(destination_buffer, number_of_received_pixels,
            MPI_datatype_struct_pixel, MPI_ANY_SOURCE, MPI_ANY_TAG,
            MPI_COMM_WORLD, &mpi_status);
-
-  // Check the MPI status object apropriately. Make sure no errors happened.
 
   return sending_worker_process_rank - 1;
 }
