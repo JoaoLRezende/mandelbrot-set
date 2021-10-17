@@ -36,6 +36,7 @@ static int parse_header(FILE *f, int *x, int *y, int *v) {
 			}
 		} else if(char_is_number(current)) {
 			ungetc(current, f);
+      #pragma GCC diagnostic ignored "-Wunused-result"
 			fscanf(f, "%d", ptr[i]);
 			i++;
 		}
