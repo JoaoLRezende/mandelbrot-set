@@ -1,5 +1,4 @@
 #include <mpi.h>
-#include <stdio.h>
 #include <stdlib.h>
 
 #include "common.h"
@@ -8,10 +7,10 @@
 #include "worker.h"
 
 int main(int argc, char **argv) {
-  const char *output_filename = (argc > 1) ? argv[1] : DEFAULT_OUTPUT_FILENAME;
-  const int image_height = (argc > 2) ? atoi(argv[2]) : DEFAULT_IMAGE_HEIGHT;
-  const int image_width = (argc > 3) ? atoi(argv[3]) : DEFAULT_IMAGE_HEIGHT;
-  const int lines_per_job = (argc > 4) ? atoi(argv[4]) : DEFAULT_LINES_PER_JOB;
+  const char *output_filename = (argc > 1) ?      argv[1]  : DEFAULT_OUTPUT_FILENAME;
+  const int image_height      = (argc > 2) ? atoi(argv[2]) : DEFAULT_IMAGE_HEIGHT;
+  const int image_width       = (argc > 3) ? atoi(argv[3]) : DEFAULT_IMAGE_HEIGHT;
+  const int lines_per_job     = (argc > 4) ? atoi(argv[4]) : DEFAULT_LINES_PER_JOB;
 
   MPI_Init(&argc, &argv);
   define_MPI_datatypes();
