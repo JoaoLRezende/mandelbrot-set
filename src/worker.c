@@ -7,6 +7,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 #include "common.h"
 #include "constants.h"
@@ -34,8 +35,10 @@ static struct pixel getPixel(double nx, double ny) {
   if (n == -1) {
     return (struct pixel){0, 0, 0};
   } else {
-    unsigned char c = 255 - n * iteration_factor;
-    return (struct pixel){c, c, c};
+    char c = (255 - n * iteration_factor);
+    return (struct pixel){((c - 20) > 0) ? (c - 20)  : 0,
+                          ((c + 40) < 255) ? (c + 40) : 255,
+                          ((c + 60) < 255) ? (c + 60) : 255};
   }
 }
 
