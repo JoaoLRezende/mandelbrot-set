@@ -13,7 +13,7 @@
 #include "constants.h"
 #include "img.h"
 
-static int num_iterations(float nx, float ny) {
+static inline int num_iterations(float nx, float ny) {
   const double px = nx * delta_x + min_x;
   const double py = ny * delta_y + min_y;
 
@@ -30,7 +30,7 @@ static int num_iterations(float nx, float ny) {
   return -1;
 }
 
-static struct pixel getPixel(double nx, double ny) {
+static inline struct pixel getPixel(double nx, double ny) {
   int n = num_iterations(nx, ny);
   if (n == -1) {
     return (struct pixel){0, 0, 0};
