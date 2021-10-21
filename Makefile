@@ -3,12 +3,12 @@ args = -O3 -Wall -Wextra -lm -fopenmp	# for production
 
 .PHONY : compile clean
 
-compile : mandel
+compile : mandelbrot-set-generator
 
 clean :
-	rm mandel
+	rm mandelbrot-set-generator
 
-mandel : src/main.c src/img.c src/img.h src/common.c src/common.h src/master.c src/master.h src/worker.c src/worker.h src/constants.h
+mandelbrot-set-generator : src/main.c src/img.c src/img.h src/common.c src/common.h src/master.c src/master.h src/worker.c src/worker.h src/constants.h
 	mpicc src/main.c src/img.c src/common.c src/master.c src/worker.c --output $@ $(args)
 
 

@@ -1,4 +1,4 @@
-To build, run `make`. The program is built as `mandel`.
+To build, run `make`. The program is built as `mandelbrot-set-generator`.
 
 To test, run `./test.sh`. Some parameters can be set in that script.
 
